@@ -1,0 +1,289 @@
+{
+  "scenario": "predictive-maintenance-bearing-overheat",
+  "version": "1.0.0",
+  "description": "Append-only, multi-agent decision chain from sensor observation to maintenance action and recovery verification.",
+  "entities": {
+    "agents": [
+      {
+        "uuid": "agent:sensor_system",
+        "agent_type": "system",
+        "name": "Bearing Sensor Service"
+      },
+      {
+        "uuid": "agent:predictive_service",
+        "agent_type": "system",
+        "name": "Predictive Health Model"
+      },
+      {
+        "uuid": "agent:maintenance_planner",
+        "agent_type": "human_team",
+        "name": "Maintenance Planning Team"
+      },
+      {
+        "uuid": "agent:operations_supervisor",
+        "agent_type": "human",
+        "name": "Operations Supervisor"
+      },
+      {
+        "uuid": "agent:technician",
+        "agent_type": "human",
+        "name": "Field Technician"
+      }
+    ],
+    "things": [
+      {
+        "uuid": "thing:bearing_assembly_a",
+        "thing_type": "component_assembly",
+        "name": "Pump Train Bearing Assembly A"
+      },
+      {
+        "uuid": "thing:temp_sensor_23",
+        "thing_type": "sensor",
+        "name": "Temperature Sensor 23"
+      },
+      {
+        "uuid": "thing:bearing_component_old",
+        "thing_type": "component",
+        "name": "Bearing Component (Old)"
+      },
+      {
+        "uuid": "thing:bearing_component_new",
+        "thing_type": "component",
+        "name": "Bearing Component (Replacement)"
+      }
+    ],
+    "purposes": [
+      {
+        "uuid": "purpose:high_speed_rotation",
+        "name": "High Speed Rotation",
+        "description": "Maintain stable operation at nominal pump RPM under expected load."
+      }
+    ]
+  },
+  "thing_purpose_connections": [
+    {
+      "uuid": "tpc:old_bearing_fulfills_rotation",
+      "agent": "agent:maintenance_planner",
+      "thing": "thing:bearing_component_old",
+      "purpose": "purpose:high_speed_rotation",
+      "start_time": "2024-01-10T00:00:00Z",
+      "stop_time": null,
+      "effective_stop_time": null,
+      "recorded_time": "2024-01-10T00:00:00Z",
+      "parameters": {
+        "base:status": "active"
+      }
+    },
+    {
+      "uuid": "tpc:new_bearing_fulfills_rotation",
+      "agent": "agent:technician",
+      "thing": "thing:bearing_component_new",
+      "purpose": "purpose:high_speed_rotation",
+      "start_time": "2024-03-18T09:30:00Z",
+      "stop_time": null,
+      "effective_stop_time": null,
+      "recorded_time": "2024-03-18T11:45:00Z",
+      "parameters": {
+        "base:status": "active",
+        "maintenance:work_order": "WO-2024-0318-17"
+      }
+    }
+  ],
+  "events": [
+    {
+      "uuid": "event:obs_001_baseline_temp",
+      "event_type": "observation",
+      "agent": "agent:sensor_system",
+      "thing_observed": "thing:temp_sensor_23",
+      "start_time": "2024-03-14T09:00:00Z",
+      "stop_time": "2024-03-14T09:00:01Z",
+      "recorded_time": "2024-03-14T09:00:02Z",
+      "parameters": {
+        "base:property_name": "temperature",
+        "base:value": 71.8,
+        "base:unit": "unit:celsius",
+        "sensor:location": "bearing_housing",
+        "sensor:quality_score": 0.99
+      }
+    },
+    {
+      "uuid": "event:obs_002_overtemp",
+      "event_type": "observation",
+      "agent": "agent:sensor_system",
+      "thing_observed": "thing:temp_sensor_23",
+      "start_time": "2024-03-15T10:30:00Z",
+      "stop_time": "2024-03-15T10:30:01Z",
+      "recorded_time": "2024-03-15T10:30:02Z",
+      "parameters": {
+        "base:property_name": "temperature",
+        "base:value": 95.3,
+        "base:unit": "unit:celsius",
+        "sensor:location": "bearing_housing",
+        "sensor:quality_score": 0.98
+      }
+    },
+    {
+      "uuid": "event:health_001_unsuitable",
+      "event_type": "health_assessment",
+      "agent": "agent:predictive_service",
+      "assessment_thing": "thing:bearing_assembly_a",
+      "assessment_purpose": "purpose:high_speed_rotation",
+      "start_time": "2024-03-15T10:31:00Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-15T10:31:05Z",
+      "parameters": {
+        "base:suitability_score": 0.45,
+        "base:evidence": [
+          "event:obs_001_baseline_temp",
+          "event:obs_002_overtemp"
+        ],
+        "predictive:remaining_useful_life_hours": 240,
+        "predictive:failure_probability_30day": 0.35,
+        "predictive:model_version": "pm-v3.2.1"
+      }
+    },
+    {
+      "uuid": "event:rec_001_replace_now",
+      "event_type": "recommendation",
+      "agent": "agent:maintenance_planner",
+      "recommendation_thing": "thing:bearing_assembly_a",
+      "recommendation_purpose": "purpose:high_speed_rotation",
+      "start_time": "2024-03-15T10:35:00Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-15T10:35:00Z",
+      "parameters": {
+        "base:action": "replace",
+        "base:priority": "high",
+        "base:target_date": "2024-03-20",
+        "base:evidence": [
+          "event:health_001_unsuitable"
+        ],
+        "maintenance:estimated_downtime_hours": 4
+      }
+    },
+    {
+      "uuid": "event:rec_002_monitor_first",
+      "event_type": "recommendation",
+      "agent": "agent:operations_supervisor",
+      "recommendation_thing": "thing:bearing_assembly_a",
+      "recommendation_purpose": "purpose:high_speed_rotation",
+      "start_time": "2024-03-15T10:40:00Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-15T10:40:05Z",
+      "parameters": {
+        "base:action": "monitor",
+        "base:priority": "medium",
+        "base:target_date": "2024-03-18",
+        "base:evidence": [
+          "event:health_001_unsuitable"
+        ],
+        "ops:rationale": "defer downtime until shift handover if risk remains manageable",
+        "ops:monitoring_interval_minutes": 15
+      }
+    },
+    {
+      "uuid": "event:action_001_replace_bearing",
+      "event_type": "action",
+      "agent": "agent:technician",
+      "start_time": "2024-03-18T08:00:00Z",
+      "stop_time": "2024-03-18T11:30:00Z",
+      "recorded_time": "2024-03-18T11:45:00Z",
+      "parameters": {
+        "base:implements_recommendation": "event:rec_001_replace_now",
+        "maintenance:action_type": "replace_bearing",
+        "maintenance:parts_used": [
+          "thing:bearing_component_new"
+        ],
+        "maintenance:work_order": "WO-2024-0318-17"
+      }
+    },
+    {
+      "uuid": "event:obs_003_connection_effective_stop",
+      "event_type": "observation",
+      "agent": "agent:technician",
+      "thing_observed": "tpc:old_bearing_fulfills_rotation",
+      "start_time": "2024-03-18T11:45:00Z",
+      "stop_time": "2024-03-18T11:45:01Z",
+      "recorded_time": "2024-03-18T11:45:02Z",
+      "parameters": {
+        "base:effective_stop_time": "2024-03-18T09:00:00Z",
+        "base:reason": "component_replacement"
+      }
+    },
+    {
+      "uuid": "event:obs_004_post_replacement_temp",
+      "event_type": "observation",
+      "agent": "agent:sensor_system",
+      "thing_observed": "thing:temp_sensor_23",
+      "start_time": "2024-03-18T14:00:00Z",
+      "stop_time": "2024-03-18T14:00:01Z",
+      "recorded_time": "2024-03-18T14:00:02Z",
+      "parameters": {
+        "base:property_name": "temperature",
+        "base:value": 72.1,
+        "base:unit": "unit:celsius",
+        "sensor:location": "bearing_housing",
+        "sensor:quality_score": 0.99
+      }
+    },
+    {
+      "uuid": "event:health_002_restored",
+      "event_type": "health_assessment",
+      "agent": "agent:predictive_service",
+      "assessment_thing": "thing:bearing_assembly_a",
+      "assessment_purpose": "purpose:high_speed_rotation",
+      "start_time": "2024-03-18T14:05:00Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-18T14:05:03Z",
+      "parameters": {
+        "base:suitability_score": 0.93,
+        "base:evidence": [
+          "event:obs_004_post_replacement_temp",
+          "event:action_001_replace_bearing"
+        ],
+        "predictive:remaining_useful_life_hours": 8700,
+        "predictive:failure_probability_30day": 0.02,
+        "predictive:model_version": "pm-v3.2.1"
+      }
+    }
+  ],
+  "event_event_connections": [
+    {
+      "uuid": "eec:recommendation_conflict_001",
+      "agent": "agent:maintenance_planner",
+      "from_event": "event:rec_001_replace_now",
+      "to_event": "event:rec_002_monitor_first",
+      "connection_type": "contradicts",
+      "start_time": "2024-03-15T10:40:10Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-15T10:40:10Z",
+      "parameters": {
+        "base:reason": "different downtime tolerance assumptions"
+      }
+    },
+    {
+      "uuid": "eec:action_implements_planner_recommendation",
+      "agent": "agent:technician",
+      "from_event": "event:action_001_replace_bearing",
+      "to_event": "event:rec_001_replace_now",
+      "connection_type": "evidence_for",
+      "start_time": "2024-03-18T11:45:05Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-18T11:45:05Z",
+      "parameters": {
+        "base:interpretation": "action followed planner recommendation"
+      }
+    },
+    {
+      "uuid": "eec:post_replacement_supports_restored_health",
+      "agent": "agent:predictive_service",
+      "from_event": "event:obs_004_post_replacement_temp",
+      "to_event": "event:health_002_restored",
+      "connection_type": "evidence_for",
+      "start_time": "2024-03-18T14:05:04Z",
+      "stop_time": null,
+      "recorded_time": "2024-03-18T14:05:04Z",
+      "parameters": {}
+    }
+  ]
+}
