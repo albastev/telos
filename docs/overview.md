@@ -312,7 +312,9 @@ telos/
 │
 ├── schema/
 │   ├── abstract/
-│   │   └── telos-abstract-schema.md  # Database-agnostic schema (what we have)
+│   │   ├── README.md                 # Canonical modular abstract schema entrypoint
+│   │   ├── specification.md          # Compatibility shim
+│   │   └── specification.full.md     # Single-file snapshot of the full abstract schema
 │   ├── neo4j/
 │   │   ├── schema.cypher             # Neo4j-specific implementation
 │   │   ├── indexes.cypher            # Index definitions
